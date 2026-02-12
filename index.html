@@ -2084,14 +2084,14 @@
                     
                     <div id="photoManager" style="display: none;">
                         <p style="margin: 0 0 1rem 0; color: #64748b;">
-                            <strong>How it works:</strong> Upload your outfit photos to Google Drive or Google Photos, get the shareable link, paste it below, and click Save. Your photos will appear in the packing list!
+                            <strong>How it works:</strong> Click "Choose Photo" for each day, select your outfit photo from your phone/computer, and it will automatically save and appear in your packing list!
                         </p>
                         
                         <div id="photoManagerDays"></div>
                         
-                        <button onclick="saveAllOutfitPhotos()" style="width: 100%; padding: 1rem; background: linear-gradient(135deg, var(--ocean-deep), var(--ocean-medium)); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 1rem;">
-                            💾 Save All Photos
-                        </button>
+                        <div style="background: rgba(34, 197, 94, 0.1); padding: 1rem; border-radius: 10px; margin-top: 1rem; border-left: 4px solid #22c55e;">
+                            <strong>✅ Photos save automatically!</strong> No need to click a "Save" button - your photos are stored as soon as you upload them.
+                        </div>
                     </div>
                 </div>
                 
@@ -4175,24 +4175,18 @@
                     <div class="photo-inputs">
                         <div class="photo-input-group">
                             <label class="photo-input-label april">April's ${day.aprilColor} Outfit</label>
-                            <input 
-                                type="url" 
-                                class="photo-input-field" 
-                                id="photo-day${day.num}-april"
-                                placeholder="Paste Google Drive/Photos link here"
-                                oninput="previewPhoto('day${day.num}', 'april')"
-                            >
+                            <input type="file" id="photo-file-day${day.num}-april" accept="image/*" style="display: none;" onchange="handlePhotoUpload('day${day.num}', 'april', this)">
+                            <button onclick="document.getElementById('photo-file-day${day.num}-april').click()" style="width: 100%; padding: 0.8rem; background: linear-gradient(135deg, #ec4899, #f472b6); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">
+                                📸 Choose Photo
+                            </button>
                             <img id="preview-day${day.num}-april" class="photo-preview hidden" alt="April's outfit preview">
                         </div>
                         <div class="photo-input-group">
                             <label class="photo-input-label carol">Carol's ${day.carolColor} Outfit</label>
-                            <input 
-                                type="url" 
-                                class="photo-input-field" 
-                                id="photo-day${day.num}-carol"
-                                placeholder="Paste Google Drive/Photos link here"
-                                oninput="previewPhoto('day${day.num}', 'carol')"
-                            >
+                            <input type="file" id="photo-file-day${day.num}-carol" accept="image/*" style="display: none;" onchange="handlePhotoUpload('day${day.num}', 'carol', this)">
+                            <button onclick="document.getElementById('photo-file-day${day.num}-carol').click()" style="width: 100%; padding: 0.8rem; background: linear-gradient(135deg, #22c55e, #4ade80); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">
+                                📸 Choose Photo
+                            </button>
                             <img id="preview-day${day.num}-carol" class="photo-preview hidden" alt="Carol's outfit preview">
                         </div>
                     </div>
@@ -4200,60 +4194,39 @@
             `).join('');
         }
 
-        function previewPhoto(day, person) {
-            const input = document.getElementById(`photo-${day}-${person}`);
-            const preview = document.getElementById(`preview-${day}-${person}`);
+        function handlePhotoUpload(day, person, input) {
+            const file = input.files[0];
+            if (!file) return;
             
-            if (input && preview) {
-                const url = input.value.trim();
-                if (url) {
-                    // Convert Google Drive/Photos links to direct image URLs
-                    const directUrl = convertToDirectImageUrl(url);
-                    preview.src = directUrl;
+            // Check file size (limit to 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Photo is too large! Please choose a photo under 5MB.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Image = e.target.result;
+                
+                // Save to localStorage
+                localStorage.setItem(`outfit_photo_${day}_${person}`, base64Image);
+                
+                // Show preview
+                const preview = document.getElementById(`preview-${day}-${person}`);
+                if (preview) {
+                    preview.src = base64Image;
                     preview.classList.remove('hidden');
-                } else {
-                    preview.classList.add('hidden');
                 }
-            }
-        }
-
-        function convertToDirectImageUrl(url) {
-            // Google Drive: convert share link to direct image
-            if (url.includes('drive.google.com')) {
-                const match = url.match(/\/d\/([^\/]+)/);
-                if (match) {
-                    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
-                }
-            }
-            
-            // Google Photos: try to convert
-            if (url.includes('photos.google.com') || url.includes('photos.app.goo.gl')) {
-                // Google Photos links are tricky, user might need to use the direct image URL
-                return url;
-            }
-            
-            // Return as-is for other URLs (Imgur, direct links, etc.)
-            return url;
+                
+                // Update in packing list
+                displayDayOutfitPhoto(day.replace('day', ''), person);
+            };
+            reader.readAsDataURL(file);
         }
 
         function saveAllOutfitPhotos() {
-            for (let day = 1; day <= 8; day++) {
-                saveOutfitPhoto(day, 'april');
-                saveOutfitPhoto(day, 'carol');
-            }
-            
-            displayOutfitPhotosInList();
-            
-            // Show success message
-            alert('✅ All outfit photos saved successfully!');
-        }
-
-        function saveOutfitPhoto(dayNum, person) {
-            const input = document.getElementById(`photo-day${dayNum}-${person}`);
-            if (input) {
-                const url = input.value.trim();
-                localStorage.setItem(`outfit_photo_day${dayNum}_${person}`, url);
-            }
+            // Photos are saved automatically on upload now!
+            alert('✅ All outfit photos are saved automatically when you upload them!');
         }
 
         function loadOutfitPhotos() {
@@ -4264,12 +4237,12 @@
         }
 
         function loadOutfitPhoto(dayNum, person) {
-            const input = document.getElementById(`photo-day${dayNum}-${person}`);
-            const savedUrl = localStorage.getItem(`outfit_photo_day${dayNum}_${person}`);
+            const savedImage = localStorage.getItem(`outfit_photo_day${dayNum}_${person}`);
+            const preview = document.getElementById(`preview-day${dayNum}-${person}`);
             
-            if (input && savedUrl) {
-                input.value = savedUrl;
-                previewPhoto(`day${dayNum}`, person);
+            if (preview && savedImage) {
+                preview.src = savedImage;
+                preview.classList.remove('hidden');
             }
         }
 
@@ -4281,7 +4254,7 @@
         }
 
         function displayDayOutfitPhoto(dayNum, person) {
-            const url = localStorage.getItem(`outfit_photo_day${dayNum}_${person}`);
+            const savedImage = localStorage.getItem(`outfit_photo_day${dayNum}_${person}`);
             const outfitItem = document.querySelector(`[data-item="day${dayNum}-outfit"]`)?.closest('.packing-item');
             
             if (!outfitItem) return;
@@ -4292,9 +4265,8 @@
                 existingPhoto.remove();
             }
             
-            // Add new photo if URL exists
-            if (url) {
-                const directUrl = convertToDirectImageUrl(url);
+            // Add new photo if exists
+            if (savedImage) {
                 const photoContainer = document.createElement('div');
                 photoContainer.className = `outfit-photo-${person}`;
                 photoContainer.style.display = 'flex';
@@ -4307,10 +4279,14 @@
                 label.style.minWidth = '70px';
                 
                 const img = document.createElement('img');
-                img.src = directUrl;
+                img.src = savedImage;
                 img.className = 'outfit-photo-display';
                 img.alt = `${person}'s Day ${dayNum} outfit`;
-                img.onclick = () => window.open(url, '_blank');
+                img.onclick = () => {
+                    // Open in a modal/new window to view full size
+                    const viewWindow = window.open('');
+                    viewWindow.document.write(`<img src="${savedImage}" style="max-width: 100%; height: auto;">`);
+                };
                 
                 photoContainer.appendChild(label);
                 photoContainer.appendChild(img);
