@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Cruise App">
     <title>Emerald Princess Color Quest 2026 🌸🐸</title>
-    <!-- App Version: 2.1 - Journey Photos Update -->
+    <!-- App Version: 2.3 - Fixed Packing List Error -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e3a5f">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231e3a5f'/><text y='0.9em' font-size='90'>⛴️</text></svg>">
@@ -3653,8 +3653,8 @@
             // Load color journey info
             loadColorJourneyInfo();
             
-            // Load packing lists
-            loadPackingLists();
+            // Load packing lists - REMOVED: Using static HTML packing list now
+            // loadPackingLists();
             
             // Update day card borders
             updateDayCardBorders();
@@ -3692,6 +3692,12 @@
         }
 
         function loadPackingLists() {
+            // OBSOLETE FUNCTION - Packing list now uses static HTML with localStorage
+            // This function is no longer needed but kept for compatibility
+            console.log('loadPackingLists called but disabled - using new static packing list');
+            return;
+            
+            /* OLD CODE COMMENTED OUT
             const sharedEssentials = [
                 "Underwear (8-10 pairs - one per day plus extras!)",
                 "Socks (8-10 pairs)",
@@ -3816,9 +3822,14 @@
         }
 
         function toggleChecklistItem(key) {
+            // OBSOLETE - Using new packing list system with handleCheckboxChange
+            console.log('toggleChecklistItem disabled');
+            return;
+            /* OLD CODE
             appData[currentProfile].checklist[key] = !appData[currentProfile].checklist[key];
             saveData();
             loadPackingLists();
+            */
         }
 
         // Budget tracking
@@ -4217,46 +4228,54 @@
 
         // Packing List Functionality
         function initPackingList() {
-            loadPackingState();
-            updateAllProgress();
-            initPhotoManager();
+            try {
+                loadPackingState();
+            } catch (error) {
+                console.error('Load Packing State Error:', error);
+            }
+            
+            try {
+                updateAllProgress();
+            } catch (error) {
+                console.error('Update Progress Error:', error);
+            }
+            
+            try {
+                initPhotoManager();
+            } catch (error) {
+                console.error('Photo Manager Error:', error);
+            }
             
             // Add event listeners to all checkboxes
-            document.querySelectorAll('.have-checkbox, .packed-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', handleCheckboxChange);
-            });
+            try {
+                document.querySelectorAll('.have-checkbox, .packed-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', handleCheckboxChange);
+                });
+            } catch (error) {
+                console.error('Checkbox Listeners Error:', error);
+            }
         }
 
         // Photo Manager Functionality
         function initPhotoManager() {
-            migrateOldPhotoKeys(); // Fix any photos saved with old format
-            generatePhotoManagerDays();
-            loadOutfitPhotos();
-            displayOutfitPhotosInList();
-            displayOutfitPhotosOnJourney();
-        }
-        
-        function migrateOldPhotoKeys() {
-            // Migrate old format (outfit_photo_day1_april) to new format if needed
-            for (let day = 1; day <= 8; day++) {
-                ['april', 'carol'].forEach(person => {
-                    const oldKey = `outfit_photo_day${day}_${person}`;
-                    const olderKey = `outfit_photo_day${day}_${person}`; // Try alternate
-                    
-                    // Check if data exists with old key format
-                    const oldData = localStorage.getItem(oldKey);
-                    if (oldData && oldData.startsWith('data:image')) {
-                        // Already in correct format, do nothing
-                        return;
-                    }
-                });
+            try {
+                generatePhotoManagerDays();
+                loadOutfitPhotos();
+                displayOutfitPhotosInList();
+                displayOutfitPhotosOnJourney();
+            } catch (error) {
+                console.error('Photo Manager Init Error:', error);
             }
         }
         
         function displayOutfitPhotosOnJourney() {
-            for (let day = 1; day <= 8; day++) {
-                displayJourneyDayPhoto(day, 'april');
-                displayJourneyDayPhoto(day, 'carol');
+            try {
+                for (let day = 1; day <= 8; day++) {
+                    displayJourneyDayPhoto(day, 'april');
+                    displayJourneyDayPhoto(day, 'carol');
+                }
+            } catch (error) {
+                console.error('Journey Photos Display Error:', error);
             }
         }
         
@@ -4580,15 +4599,26 @@
                 selectProfile(saved);
             }
             
-            // Initialize everything
-            init();
-            initPackingList();
-            
-            // Add version indicator
+            // Add version indicator FIRST so we always see if JS is running
             const versionDiv = document.createElement('div');
             versionDiv.style.cssText = 'text-align: center; padding: 1rem; color: #999; font-size: 0.8rem;';
-            versionDiv.innerHTML = 'App v2.1 - Journey Photos & Cache Fix | Updated: Feb 11, 2026';
+            versionDiv.innerHTML = 'App v2.3 - Packing List Fixed! | Updated: Feb 11, 2026';
             document.body.appendChild(versionDiv);
+            
+            // Initialize everything with error handling
+            try {
+                init();
+            } catch (error) {
+                console.error('Init Error:', error);
+                versionDiv.innerHTML += ' <span style="color: red;">⚠️ Init failed - check console</span>';
+            }
+            
+            try {
+                initPackingList();
+            } catch (error) {
+                console.error('Packing List Init Error:', error);
+                versionDiv.innerHTML += ' <span style="color: red;">⚠️ Packing init failed</span>';
+            }
         });
     </script>
 </body>
